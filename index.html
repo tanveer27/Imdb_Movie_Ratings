@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>IMDB Movie Ranking</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+	<link rel="shortcut icon" href="/favicon.ico">
+	
+	
+	<!--[if lt IE 9]>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+
+		<!-- jquery CDN -->
+<!-- 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script> -->
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+	<!-- fuzzyserch library -->
+	<script src="fuzzy.js"></script>
+	<!-- lodash -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+
+	<!-- normalize.css CDN -->
+	<!-- <link rel="stylesheet" type="text/css" href="https://raw.github.com/necolas/normalize.css/master/normalize.css" /> -->
+	<!-- <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.4.2/mocha.css" /> -->
+
+
+
+	<!-- bootstrap CDN -->
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+	
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<!-- <link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/css/bootstrap-combined.min.css" /> -->
+	<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.0/js/bootstrap.min.js"></script>
+
+	<!-- Vue project related cdn -->
+	<!-- <script src="https://unpkg.com/vue"></script> -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.3/vue.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.1/axios.min.js"></script>
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/3.4.2/mocha.js"></script> -->
+</head>
+<body>
+	<div id="app">
+		<div class="container">
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					
+					<h2>Movies</h2>
+					
+
+					<button type="button" class="btn btn-success pull-right" style="margin-top: -50px;" @click.prevent="createMovie">
+						add Movie
+					</button>
+
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="form-group col-sm-4 col-sm-offset-8">
+							<input type="text" name="nameFilter" class="form-control pull-right" placeholder="Search" v-model="nameFilter" />
+						</div>
+
+						<div class="col-sm-12">
+							<table class="table table-bordered table-striped table-responsive">
+								<tr>
+									<th>
+										Rank
+										<button class="btn btn-primary pull-right" @click.prevent="orderAsc()"> Sort <span class="glyphicon glyphicon-sort-by-attributes"></span></button>
+										<button class="btn btn-danger pull-right" @click.prevent="orderDesc()">Sort <span class="glyphicon glyphicon-sort-by-attributes-alt"></span></button>
+									</th>
+									<th>
+										Title
+										<button class="btn btn-primary pull" @click.prevent="sortNameAsc()">Sort <span class="glyphicon glyphicon-sort-by-attributes"></span></button>
+									</th>
+									<th width="200px">Action</th>
+								</tr>
+								<tr v-for="Movie in filterMovie" track_by="id">
+									<td>{{ Movie.rank}}</td>
+									<td>{{ Movie.title }}</td>
+									<td>
+										<button class="btn btn-primary" @click.prevent="editMovie(Movie)">Edit</button>
+										<button class="btn btn-danger" @click.prevent="deleteMovie(Movie)">Delete</button>
+									</td>
+								</tr>
+							</table>
+						</div>
+						<!-- Movie Listing -->
+						
+					</div>
+					
+				</div>
+			</div>
+
+<!-- add Movie Modal -->
+<div class="modal fade" id="add-Movie" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+				<h4 class="modal-title" id="myModalLabel">add Movie</h4>
+			</div>
+			<div class="modal-body">
+
+				<form method="POST" enctype="multipart/form-data" v-on:submit.prevent="addMovie">
+					<div class="form-group">
+						<label for="Id">Id:</label>
+						<input type="text" name="Id" class="form-control" v-model="newMovie.Id" required/>
+						<span v-if="formErrors['Id']" class="error text-danger">{{ formErrors['Id'][0] }}</span>
+					</div>
+
+					<div class="form-group">
+						<label for="Rank">Rank:</label>
+						<input type="number" name="Rank" class="form-control" v-model="newMovie.Rank" required/>
+						<span v-if="formErrors['Rank']" class="error text-danger">{{ formErrors['Rank'][0] }}</span>
+					</div>
+
+					<div class="form-group">
+						<label for="title">Title:</label>
+						<input type="text" name="title" class="form-control" v-model="newMovie.title" required/>
+						<span v-if="formErrors['title']" class="error text-danger">{{ formErrors['title'][0] }}</span>
+					</div>
+
+					<div class="form-group">
+						<button type="submit" class="btn btn-success">Submit</button>
+					</div>
+
+				</form>
+
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Edit Movie Modal -->
+<div class="modal fade" id="edit-Movie" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+				<h4 class="modal-title" id="myModalLabel">Edit Movie</h4>
+			</div>
+			<div class="modal-body">
+
+				<form method="POST" enctype="multipart/form-data" v-on:submit.prevent="updateMovie(fillMovie.index)">
+
+					<div class="form-group">
+						<label for="Id">Id:</label>
+						<input type="text" name="Id" class="form-control" v-model="fillMovie.Id" required/>
+						<span v-if="formErrorsUpdate['Id']" class="error text-danger">{{ formErrorsUpdate['Id'][0] }}</span>
+					</div>
+
+					<div class="form-group">
+						<label for="Rank">Rank:</label>
+						<input type="number" name="Rank" class="form-control" v-model="fillMovie.Rank" required/>
+						<span v-if="formErrorsUpdate['Rank']" class="error text-danger">{{ formErrorsUpdate['Rank'][0] }}</span>
+					</div>
+
+					<div class="form-group">
+						<label for="title">Title:</label>
+						<input type="text" name="title" class="form-control" v-model="fillMovie.title" required/>
+						<span v-if="formErrorsUpdate['title']" class="error text-danger">{{ formErrorsUpdate['title'][0] }}</span>
+					</div>
+
+
+
+					<div class="form-group">
+						<button type="submit" class="btn btn-success">Submit</button>
+					</div>
+
+				</form>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+</div>
+</div>
+
+<script src="app.js"></script>
+<script type="text/javascript">
+	
+	window.LastRank=101;
+
+
+</script>
+</body>
+</html>
